@@ -103,8 +103,8 @@ const HEAD_RE = new RegExp(
   `(?:(?:<meta charset="utf-8"(?: ?/)?>|<!--[^<>!-]*-->)${WS})*` +
   `<meta http-equiv="Content-Security-Policy" content="([^"]*)"(?: ?/)?>`, 'i');
 
-export function htmlProblems(rel, text) {
-  const guide = rel.startsWith('parents/');
+// `guide` marks a printable page (a parents' guide, or the teacher's kit in teachers/), which gets GUIDE_CSP.
+export function htmlProblems(rel, text, guide = rel.startsWith('parents/')) {
   const want = guide ? GUIDE_CSP : APP_CSP;
   const from = guide ? 'templates/app/parents/en.html' : 'templates/app/index.html';
   if (!/<meta\s+http-equiv=["']?Content-Security-Policy/i.test(text)) return [`missing the kidvo Content-Security-Policy <meta> tag (copy it from ${from}).`];

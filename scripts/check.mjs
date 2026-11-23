@@ -7,7 +7,9 @@
 // about a PR that changes anything outside apps/<id>/: review those files line by line.
 import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
-import { ROOT, appIds, checkApp } from './lib.mjs';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { ROOT, SITE_ORIGIN, appIds, checkApp, htmlProblems, findUrls, unmask } from './lib.mjs';
 
 const errors = [];
 const warnings = [];
@@ -21,6 +23,17 @@ for (const id of ids) {
   for (const e of r.errors) errors.push(`apps/${id}: ${e}`);
   for (const w of r.warnings) warnings.push(`apps/${id}: ${w}`);
   notes.push(`apps/${id}: ${(r.bytes / 1024).toFixed(1)} KB, languages: ${(r.manifest?.languages || []).join(', ')}, by "${r.manifest?.author?.name ?? '?'}"`);
+}
+
+// The teacher's kit is a printable page like the parents' guides, opened as kidvo.eu itself: the same
+// policy without scripts, nothing from outside, and one page for each language the desktop speaks.
+for (const l of ['en', 'hu', 'ro']) {
+  const rel = `teachers/${l}.html`;
+  let text;
+  try { text = await readFile(join(ROOT, rel), 'utf8'); } catch { errors.push(`${rel} is missing (the teacher's kit in "${l}").`); continue; }
+  for (const e of htmlProblems(rel, text, true)) errors.push(`${rel}: ${e}`);
+  if (/<script\b/i.test(text)) errors.push(`${rel}: printable pages carry no scripts.`);
+  for (const u of findUrls(unmask(text))) if (u !== SITE_ORIGIN && !u.startsWith(SITE_ORIGIN + '/')) errors.push(`${rel}: points outside kidvo.eu: ${u}`);
 }
 
 const base = process.env.BASE_SHA;

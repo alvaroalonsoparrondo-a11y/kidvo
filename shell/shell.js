@@ -549,6 +549,8 @@
   const mail = CFG.contactEmail || 'hello@kidvo.eu';
   const games = () => [...apps.values()].filter(a => a.type !== 'overlay' && a.bands?.length);
   const parentsUrl = app => `${appDir(app)}parents/${(app.languages || ['en']).includes(lang) ? lang : 'en'}.html`;
+  // The teacher's kit (teachers/<lang>.html) is written in the languages the desktop speaks.
+  const teachersUrl = () => `teachers/${['en', 'hu', 'ro'].includes(lang) ? lang : 'en'}.html`;
 
   function openBuiltin(key, title, width, height, bodyFn, reopen) {
     const existing = [...wins.values()].find(r => r.builtin === key);
@@ -558,6 +560,7 @@
     rec.reopen = reopen;
     rec.node.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => openApp(b.dataset.open)));
     rec.node.querySelectorAll('[data-parents]').forEach(b => b.addEventListener('click', () => openParents(b.dataset.parents)));
+    rec.node.querySelectorAll('[data-teachers]').forEach(b => b.addEventListener('click', openTeachers));
   }
 
   function openAbout() {
@@ -601,6 +604,9 @@
           ${games().map(app => `<li><span><b>${esc(appText(app, 'name'))}</b> <small>${app.bands.map(b => t(b)).join(' · ')}</small></span>
             <button class="btn alt" type="button" data-parents="${esc(app.id)}">${t('parentsGuide')}</button></li>`).join('')}
         </ul>
+        <h3>${t('teachersH')}</h3>
+        <p>${t('teachersP')}</p>
+        <div class="btn-row"><button class="btn alt" type="button" data-teachers>${t('teachersKit')}</button></div>
         <h3>${t('buildH')}</h3>
         <p>${t('buildP')}</p>
         <div class="btn-row">
@@ -661,16 +667,22 @@
       </div>`, () => openInfo(appId));
   }
 
+  // A printable guide in a window: the page in a frame without scripts, and a link that opens it to print.
+  const guideBody = (url, title) => el('div', { class: 'parents-wrap' },
+    el('iframe', { src: url, sandbox: '', referrerpolicy: 'no-referrer', title }),
+    el('a', { class: 'btn print-link', href: url, target: '_blank', rel: 'noopener' }, T('openToPrint')));
+
   // The parents' guide is a plain, printable page in the game's folder: apps/<id>/parents/<lang>.html
   function openParents(appId) {
     const app = apps.get(appId);
     if (!app) return;
-    openBuiltin('parents:' + appId, `${T('parentsGuide')} · ${appText(app, 'name')}`, 640, 580, () => {
-      const url = parentsUrl(app);
-      return el('div', { class: 'parents-wrap' },
-        el('iframe', { src: url, sandbox: '', referrerpolicy: 'no-referrer', title: T('parentsGuide') }),
-        el('a', { class: 'btn print-link', href: url, target: '_blank', rel: 'noopener' }, T('openToPrint')));
-    }, () => openParents(appId));
+    openBuiltin('parents:' + appId, `${T('parentsGuide')} · ${appText(app, 'name')}`, 640, 580,
+      () => guideBody(parentsUrl(app), T('parentsGuide')), () => openParents(appId));
+  }
+
+  // The teacher's kit, a 45-minute lesson on one printable page: teachers/<lang>.html
+  function openTeachers() {
+    openBuiltin('teachers', T('teachersKit'), 640, 580, () => guideBody(teachersUrl(), T('teachersKit')), openTeachers);
   }
 
   /* ---------------- the games page ---------------- */

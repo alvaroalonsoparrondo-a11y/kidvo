@@ -16,6 +16,8 @@ ok(htmlProblems('index.html', page('<!-- Keep this line exactly as it is, first 
 ok(htmlProblems('parents/en.html', page('', GUIDE_CSP)), 'a guide with the guide policy');
 bad(htmlProblems('parents/en.html', page('')), 'a guide with the game policy (it would allow scripts)');
 bad(htmlProblems('index.html', page('', GUIDE_CSP)), 'a game with the guide policy');
+ok(htmlProblems('teachers/en.html', page('', GUIDE_CSP), true), "the teacher's kit with the guide policy");
+bad(htmlProblems('teachers/en.html', page(''), true), "the teacher's kit with the game policy (it would allow scripts)");
 bad(htmlProblems('index.html', page('<img src="x.png">\n')), 'an <img> closes <head>, so the policy is ignored');
 bad(htmlProblems('index.html', page('x')), 'a stray letter closes <head>');
 bad(htmlProblems('index.html', page('\u00a0')), 'a no-break space closes <head>');

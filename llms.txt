@@ -15,3 +15,7 @@
 - [Secret Keeper](https://github.com/AlparKacso/kidvo/tree/main/apps/secret-keeper): a friendly practice AI asks for personal information; keep it private
 - [Train the Sorter](https://github.com/AlparKacso/kidvo/tree/main/apps/sorter): teach a tiny classifier with examples and discover bias
 - [Confident Nonsense](https://github.com/AlparKacso/kidvo/tree/main/apps/nonsense): catch the made-up answers of an always-confident quiz AI
+
+## For teachers
+
+- [kidvo in one lesson](https://kidvo.eu/teachers/en.html): a 45-minute lesson plan on one printable page (also in [Hungarian](https://kidvo.eu/teachers/hu.html) and [Romanian](https://kidvo.eu/teachers/ro.html))
