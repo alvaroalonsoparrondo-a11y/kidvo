@@ -265,6 +265,7 @@
     const rec = wins.get(id);
     if (!rec) return;
     rec.minimized = true;
+    hush(id);
     playSend(id); // back to the games (or minimized on the desktop): this stretch of play is over
     rec.node.hidden = true;
     rec.task.classList.add('min');
@@ -341,6 +342,7 @@
     const rec = wins.get(id);
     if (!rec) return;
     if (rec.frame) frames.delete(rec.frame.contentWindow);
+    hush(id);
     playSend(id);
     plays.delete(id);
     rec.node.remove();
@@ -600,6 +602,7 @@
           <li>${t('priv1')}</li>
           <li>${t('priv2')}</li>
           <li>${t('privCount')}</li>
+          <li>${t('privSpeak')}</li>
           <li>${t('priv3')} <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">${t('privacyGithub')}</a></li>
         </ul>
         <h3>${t('gamesH')}</h3>
@@ -699,6 +702,7 @@
   const ART = {
     games: ['ccc.ccc', 'ccc.ccc', 'ccc.ccc', '.......', 'ccc.ccc', 'ccc.ccc', 'ccc.ccc'],
     desktop: ['ccccccc', 'ccccccc', 'c.....c', 'c.....c', 'c.....c', 'c.....c', 'ccccccc'],
+    speak: ['...c.....', '..cc...c.', 'cccc.c..c', 'cccc.c..c', 'cccc.c..c', '..cc...c.', '...c.....'],
     play: ['cc....', 'ccc...', 'cccc..', 'ccccc.', 'ccccc.', 'cccc..', 'ccc...', 'cc....'],
     cloud: ['.....wwww.......', '...wwwwwwww.ww..', '.wwwwwwwwwwwwww.', 'wwwwwwwwwwwwwwww', 'sswwwwwwwwwwwwss', '.ssssssssssssss.'],
     puff: ['...www.....', '.wwwwwwww..', 'wwwwwwwwwww', '.sssssssss.'],
@@ -1000,6 +1004,14 @@
       return true;
     },
     windows: () => windowRects(),
+    // Read aloud, when the switch is on: only for a game window on screen (not one waiting behind its card).
+    speak: (ctx, text, fresh) => {
+      const rec = wins.get(ctx.winId);
+      if (!rec || rec.minimized || rec.id !== focusedId || typeof text !== 'string' || !text.trim()) return false;
+      if (!speak(text, fresh === true)) return false;
+      speaker = rec.id;
+      return true;
+    },
     // Only a game that declares the band may choose it (overlays and built-in windows have none).
     setBand: (ctx, b) => {
       if (!apps.get(ctx.appId)?.bands?.includes(b)) throw new Error('not one of this game\'s age bands: ' + b);
@@ -1165,6 +1177,9 @@
     }, l.toUpperCase())));
     box.setAttribute('aria-label', T('language'));
     renderViews();
+    // Another language needs another voice: stop the old one, and show the switch only if this one has a voice.
+    if (synth) synth.cancel();
+    renderSpeak();
   }
 
   function setLang(l, initial = false) {
@@ -1215,6 +1230,59 @@
     for (const win of frames.keys()) { try { win.postMessage({ kidvo: 1, kind: 'band', band }, '*'); } catch { /* gone */ } }
   }
 
+  /* ---------------- read aloud: voices on this device only ---------------- */
+  // For children still learning to read. Games ask with kidvo.speak(text); the switch in the top bar decides.
+  // Only a voice that runs on the device is used (voice.localService): a network voice would send the game's
+  // text to a speech service. With no such voice for the language, the switch does not appear.
+  const synth = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance === 'function' ? window.speechSynthesis : null;
+  let speakOn = prefs.get('speak') === true;
+  let speaker = null; // the window whose lines are being read
+  // A game that goes back behind its card or closes takes its lines with it.
+  function hush(id) { if (synth && speaker === id) { synth.cancel(); speaker = null; } }
+  // iOS starts speech only from a tap on this page, not from a message, so a switch that was left on is woken by
+  // the first tap here (a game card, the top bar) with a silent line.
+  if (synth && speakOn) document.addEventListener('pointerdown', () => {
+    const voice = speakOn && localVoice();
+    if (!voice) return;
+    const u = new SpeechSynthesisUtterance('');
+    u.voice = voice; // never the browser's default, which may be a network voice
+    synth.speak(u);
+  }, { once: true, capture: true });
+  function localVoice() {
+    if (!synth) return null;
+    const mine = synth.getVoices().filter(v => v.localService === true && String(v.lang).toLowerCase().replace('_', '-').split('-')[0] === lang);
+    return mine.find(v => v.default) || mine[0] || null;
+  }
+  function speak(text, fresh) {
+    const voice = speakOn && localVoice();
+    if (!voice) return false;
+    if (fresh) synth.cancel();
+    const u = new SpeechSynthesisUtterance(String(text).slice(0, 600));
+    u.voice = voice;
+    u.lang = voice.lang;
+    u.rate = band === 'explorers' ? 0.9 : 1;
+    synth.speak(u);
+    return true;
+  }
+  function renderSpeak() {
+    const b = $('#speak');
+    const can = !!localVoice();
+    b.hidden = !can;
+    b.setAttribute('aria-pressed', speakOn ? 'true' : 'false');
+    b.title = T('readAloud');
+    b.setAttribute('aria-label', T('readAloud'));
+    if (!b.firstChild) b.innerHTML = pixelSvg(ART.speak, 2);
+  }
+  $('#speak').addEventListener('click', () => {
+    speakOn = !speakOn;
+    prefs.set('speak', speakOn);
+    if (speakOn) speak(T('readAloudOn'), true); else if (synth) synth.cancel();
+    speaker = null;
+    renderSpeak();
+  });
+  // Voices load late in some browsers, and a new language may have none.
+  if (synth) synth.addEventListener ? synth.addEventListener('voiceschanged', renderSpeak) : (synth.onvoiceschanged = renderSpeak);
+
   /* ---------------- boot ---------------- */
   const browserLang = (navigator.languages || [navigator.language || 'en']).map(x => String(x).slice(0, 2).toLowerCase()).find(x => LANGS.includes(x));
   document.body.dataset.view = view;
@@ -1239,5 +1307,5 @@
   }
 
   // A small, read-only handle for tests and curious people in the console.
-  window.kidvoShell = Object.freeze({ openApp, closeWindow, setLang, setView, view: () => view, band: () => band, apps: () => [...apps.keys()], windows: windowRects });
+  window.kidvoShell = Object.freeze({ openApp, closeWindow, setLang, setView, view: () => view, band: () => band, speaking: () => speakOn, apps: () => [...apps.keys()], windows: windowRects });
 })();
