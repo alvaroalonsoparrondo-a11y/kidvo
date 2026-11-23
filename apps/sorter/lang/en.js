@@ -1,5 +1,5 @@
 kidvoStrings('en', {
-  tag: 'practice AI · learns only from your examples',
+  tag: 'Practice AI · learns only from your examples',
   who: 'Who is playing?',
   whoNote: 'SORT-1 will talk to you a little differently.',
   band_explorers: 'Explorer',

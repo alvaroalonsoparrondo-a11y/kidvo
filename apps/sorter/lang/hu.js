@@ -1,5 +1,5 @@
 kidvoStrings('hu', {
-  tag: 'gyakorló AI · csak a te példáidból tanul',
+  tag: 'Gyakorló AI · csak a te példáidból tanul',
   who: 'Ki játszik?',
   whoNote: 'SORT-1 kicsit másképp fog beszélni veled.',
   band_explorers: 'Felfedező',
