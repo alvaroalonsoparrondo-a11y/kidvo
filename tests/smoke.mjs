@@ -83,6 +83,24 @@ async function run(name) {
       !document.getElementById('desktop').classList.contains('staged'), id, { timeout: 3000 });
   });
 
+  // Arrow keys must reach a game opened from its card without a click inside it first (found 2026-11-24:
+  // a reopened Robot Maze ignored the keyboard until the child clicked into it).
+  await step('a game opened from its card has the keyboard', async () => {
+    const id = windowApps[0].id;
+    await page.click(`#play .card[data-app="${id}"] .card-play`);
+    const frame = `.win:not([hidden]) iframe[src^="apps/${id}/"]`;
+    await page.locator(frame).waitFor({ state: 'visible', timeout: 3000 });
+    await page.waitForFunction(sel => document.activeElement === document.querySelector(sel), frame, { timeout: 2000 })
+      .catch(() => { throw new Error('the game frame did not get the keyboard focus'); });
+    // With the keyboard in the game, Escape still goes back to the games, and the keyboard lands on the game's card.
+    await page.waitForTimeout(300); // the game's SDK is running by now
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.getElementById('desktop').classList.contains('staged'), null, { timeout: 3000 })
+      .catch(() => { throw new Error('Escape inside the game did not go back to the games'); });
+    await page.waitForFunction(id => document.activeElement === document.querySelector(`#play .card[data-app="${id}"] .card-play`), id, { timeout: 2000 })
+      .catch(() => { throw new Error('after Escape the keyboard did not land on the game card'); });
+  });
+
   // Game plays are counted without names or IDs (counter/), and only on kidvo.eu. Here a stand-in config points the
   // count at this test, which records each beacon instead of letting it leave the machine.
   await step('a game play is counted on back, when the tab hides and when the game closes', async () => {

@@ -59,7 +59,7 @@ templates/app/        a working mini game with a practice AI, ready to copy
 counter/              the play counter: Cloudflare Worker, D1 schema, npm scripts to deploy and read it
 ```
 
-Bus protocol (postMessage, `{kidvo:1, kind}`): app→shell `hello`, `sub`, `emit`, `call`. Shell→app `init {appId, winId, lang, band}`, `lang {lang}`, `band {band}`, `event`, `reply`. App topics are prefixed with the sender's id.
+Bus protocol (postMessage, `{kidvo:1, kind}`): app→shell `hello`, `sub`, `emit`, `call`, `escape` (sent by the SDK for an Escape the game did not keep; the shell goes back to the games when that game is on the stage, 2026-11-24: a game opened from its card gets the keyboard focus). Shell→app `init {appId, winId, lang, band}`, `lang {lang}`, `band {band}`, `event`, `reply`. App topics are prefixed with the sender's id.
 
 **Claude artifact preview:** the private preview host refuses file requests from sandboxed frames, so the preview copy inlines every `<script src>` into each game page. The real site does not need this.
 

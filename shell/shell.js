@@ -287,6 +287,13 @@
     rec.task.classList.remove('min');
     fitStage(rec);
     focus(id);
+    keysTo(rec);
+  }
+
+  // A game that comes on screen gets the keyboard, so arrow keys reach it without a click inside first.
+  // Only on open and restore: a click on a window's title bar must keep its own focus.
+  function keysTo(rec) {
+    if (rec?.frame && !rec.minimized) rec.frame.focus({ preventScroll: true });
   }
 
   // On the games page one game at a time is on the stage; the others wait, minimized, behind their cards.
@@ -312,6 +319,9 @@
 
   // "Back to the games": every window on the stage shrinks into its card (or simply goes) and waits there.
   function goBack() {
+    // The keyboard was in the game: hand it to the game's card, not to a frame that is about to hide.
+    const from = [...wins.values()].find(r => r.frame && r.frame === document.activeElement);
+    if (from) cardFor(from.appId)?.querySelector('.card-play')?.focus({ preventScroll: true });
     for (const r of [...wins.values()]) {
       if (r.minimized || r.leaving) continue;
       const card = r.appId && cardFor(r.appId);
@@ -429,6 +439,9 @@
     });
     registerFrame(frame, appId, rec.id);
     playStart(rec);
+    keysTo(rec);
+    // Safari drops the focus while the frame loads its page, so give it again once it has.
+    frame.addEventListener('load', () => { if (focusedId === rec.id) keysTo(rec); }, { once: true });
     return rec;
   }
 
@@ -1076,6 +1089,10 @@
         playRound(ctx.appId, m.topic);
         break;
       }
+      case 'escape':
+        // Escape pressed inside the game on the stage (the game has the keyboard): back to the games, as on the page.
+        if (ctx.winId && ctx.winId === focusedId && desktop.classList.contains('staged') && startMenu.hidden) goBack();
+        break;
       case 'call': {
         const fn = methods[m.method];
         if (!fn) { reply({ kind: 'reply', id: m.id, error: 'unknown method ' + m.method }); return; }

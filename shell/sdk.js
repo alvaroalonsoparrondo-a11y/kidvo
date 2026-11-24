@@ -234,5 +234,8 @@
         }
   };
   window.kidvo = Object.freeze(kidvo);
+  // A game on the stage has the keyboard, so Escape goes back to the games from here too. On window, so it runs
+  // after the game's own listeners: a game that uses Escape itself calls preventDefault() and keeps it.
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && !e.defaultPrevented) post({ kind: 'escape' }); });
   post({ kind: 'hello' });
 })();
