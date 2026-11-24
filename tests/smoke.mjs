@@ -497,7 +497,26 @@ async function run(name) {
       }
     });
   }
+  // The teacher's kit is promised as one printed A4 page in every language.
+  await step("the teacher's kit opens, and prints on one page", async () => {
+    for (const l of ['en', 'hu', 'ro']) {
+      await other.goto(`${SITE}/teachers/${l}.html`);
+      if ((await other.locator('body').innerText()).length < 200) throw new Error(`teachers/${l}.html looks empty`);
+      if (name !== 'chromium') continue; // only Chromium prints to PDF
+      const pdf = await other.pdf({ format: 'A4', preferCSSPageSize: true, printBackground: true });
+      const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page\b(?!s)/g) || []).length;
+      if (pages !== 1) throw new Error(`teachers/${l}.html prints on ${pages} pages`);
+    }
+  });
   await other.close();
+
+  await step("the grown-ups window opens the teacher's kit", async () => {
+    if (await page.evaluate(() => window.kidvoShell.view()) === 'play') await page.click('#play [data-shell="grownups"]');
+    else { await page.click('#start-btn'); await page.click('#start-menu [data-shell="grownups"]'); }
+    await page.click('.win [data-teachers]');
+    const lang = await page.evaluate(() => document.documentElement.lang);
+    await page.locator(`.win iframe[src="teachers/${lang}.html"]`).waitFor({ state: 'visible', timeout: 3000 });
+  });
 
   // Phones: every game must fit a 360 px wide screen without sideways scrolling. An Explorer is playing: their
   // letters are the biggest, and the games start straight away instead of asking who is playing.

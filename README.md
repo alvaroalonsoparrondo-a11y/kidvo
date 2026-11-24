@@ -21,6 +21,7 @@ Every game has a **practice AI**: a clearly labelled pretend AI (like ORACLE-300
 - **Read aloud.** A speaker switch reads the games aloud for children who cannot read yet, with voices built into the device, so no text leaves it.
 - **Three languages to start:** English, Hungarian and Romanian.
 - **A printable guide for parents and teachers** comes with every game.
+- **A teacher's kit, "kidvo in one lesson"** ([`teachers/`](teachers/en.html)): a 45-minute lesson plan on one printable page, in English, Hungarian and Romanian.
 
 ## Games
 

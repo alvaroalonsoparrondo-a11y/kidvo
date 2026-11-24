@@ -73,4 +73,22 @@
     <xhtml:link rel="alternate" hreflang="hu" href="https://kidvo.eu/apps/sorter/parents/hu.html"/>
     <xhtml:link rel="alternate" hreflang="ro" href="https://kidvo.eu/apps/sorter/parents/ro.html"/>
   </url>
+  <url>
+    <loc>https://kidvo.eu/teachers/en.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kidvo.eu/teachers/en.html"/>
+    <xhtml:link rel="alternate" hreflang="hu" href="https://kidvo.eu/teachers/hu.html"/>
+    <xhtml:link rel="alternate" hreflang="ro" href="https://kidvo.eu/teachers/ro.html"/>
+  </url>
+  <url>
+    <loc>https://kidvo.eu/teachers/hu.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kidvo.eu/teachers/en.html"/>
+    <xhtml:link rel="alternate" hreflang="hu" href="https://kidvo.eu/teachers/hu.html"/>
+    <xhtml:link rel="alternate" hreflang="ro" href="https://kidvo.eu/teachers/ro.html"/>
+  </url>
+  <url>
+    <loc>https://kidvo.eu/teachers/ro.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kidvo.eu/teachers/en.html"/>
+    <xhtml:link rel="alternate" hreflang="hu" href="https://kidvo.eu/teachers/hu.html"/>
+    <xhtml:link rel="alternate" hreflang="ro" href="https://kidvo.eu/teachers/ro.html"/>
+  </url>
 </urlset>
