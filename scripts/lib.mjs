@@ -1,8 +1,11 @@
 // Shared rules for kidvo apps. Used by check.mjs (CI) and build-registry.mjs.
 import { readdir, readFile, lstat } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
-import { join, extname, relative } from 'node:path';
+import { join, extname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// Paths inside an app, always with forward slashes, so the checks read the same on Windows.
+const appPath = (dir, f) => relative(dir, f).split(sep).join('/');
 
 export const ROOT = fileURLToPath(new URL('..', import.meta.url));
 export const APPS_DIR = join(ROOT, 'apps');
@@ -247,12 +250,12 @@ export async function checkApp(id, allIds) {
 
   if (files.length > LIMITS.files) errors.push(`Too many files (${files.length}). Keep it under ${LIMITS.files}.`);
   const entry = m?.entry || 'index.html';
-  if (!files.some(f => relative(dir, f) === entry)) errors.push(`Missing ${entry}.`);
-  if (m?.icon && !files.some(f => relative(dir, f) === m.icon)) errors.push(`Icon file "${m.icon}" not found.`);
+  if (!files.some(f => appPath(dir, f) === entry)) errors.push(`Missing ${entry}.`);
+  if (m?.icon && !files.some(f => appPath(dir, f) === m.icon)) errors.push(`Icon file "${m.icon}" not found.`);
   if (m?.extends) for (const x of m.extends) if (!allIds.includes(x)) errors.push(`extends: no app called "${x}".`);
 
   for (const f of files) {
-    const rel = relative(dir, f);
+    const rel = appPath(dir, f);
     const ext = extname(f).toLowerCase();
     const info = await lstat(f);
     // A link could point anywhere on the build machine, and the deploy would publish what it points to.
@@ -278,7 +281,7 @@ export async function checkApp(id, allIds) {
     if (ext === '.svg') for (const p of svgProblems(text)) errors.push(`${rel}: ${p}`);
   }
   // Texts: lang/<code>.js for every declared language, all with the same keys as English.
-  const rels = files.map(f => relative(dir, f));
+  const rels = files.map(f => appPath(dir, f));
   if (m?.languages && rels.some(r => r.startsWith('lang/'))) {
     const keysOf = async code => {
       let captured = null;
