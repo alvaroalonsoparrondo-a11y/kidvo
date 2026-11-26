@@ -357,6 +357,35 @@ async function run(name) {
     }
   });
 
+  // The language menu picks a language with a real mouse click. Safari does not focus a clicked button, so a menu
+  // that closed when focus left it was gone before the click arrived, and no language could be picked there.
+  await step('the language menu picks a language with a click', async () => {
+    const lp = await desk.newPage();
+    lp.on('pageerror', err => problems.push(`${name} language-menu page error: ${err.message}`));
+    try {
+      await lp.goto(`${SITE}/`);
+      await lp.waitForFunction(() => window.kidvoShell, null, { timeout: 5000 });
+      await lp.evaluate(() => window.kidvoShell.setLang('en'));
+      await lp.click('#lang-btn');
+      await lp.locator('#lang-menu').waitFor({ state: 'visible', timeout: 2000 });
+      await lp.click('#lang-menu .lang-item[lang="hu"]');
+      await lp.waitForFunction(() => document.documentElement.lang === 'hu', null, { timeout: 2000 })
+        .catch(() => { throw new Error('clicking HU in the menu did not change the language'); });
+      const saved = await lp.evaluate(() => JSON.parse(localStorage.getItem('kidvo:shell') || '{}').lang);
+      if (saved !== 'hu') throw new Error(`the language was saved as ${saved}`);
+      if (await lp.locator('#lang-menu').isVisible()) throw new Error('the menu stayed open after a pick');
+      // Tab out of the open menu closes it.
+      await lp.click('#lang-btn');
+      await lp.locator('#lang-menu').waitFor({ state: 'visible', timeout: 2000 });
+      for (let i = 0; i < 4; i++) await lp.keyboard.press('Tab');
+      await lp.locator('#lang-menu').waitFor({ state: 'hidden', timeout: 2000 })
+        .catch(() => { throw new Error('the menu stayed open after Tab moved focus out of it'); });
+      await lp.evaluate(() => window.kidvoShell.setLang('en'));
+    } finally {
+      await lp.close();
+    }
+  });
+
   // Read aloud uses only a voice that runs on the device. A stand-in speech engine offers an English voice on the
   // device and a Hungarian one that is not: English gets the switch and a game is read with the device's voice;
   // Hungarian gets no switch, and nothing is read with the network voice.

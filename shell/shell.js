@@ -1234,13 +1234,15 @@
     box.onkeydown = e => {
       if (menu.hidden) return;
       if (e.key === 'Escape') { e.stopPropagation(); close(); toggle.focus(); return; }
+      // Tab may leave the menu: close it once focus has moved. (Not on focusout: Safari does not focus a
+      // clicked button, so the menu would close on mousedown, before the click could pick a language.)
+      if (e.key === 'Tab') { setTimeout(() => { if (!box.contains(document.activeElement)) close(); }, 0); return; }
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
         const i = items.indexOf(document.activeElement);
         items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
       }
     };
-    box.onfocusout = e => { if (!menu.hidden && !box.contains(e.relatedTarget)) close(); };
     box.replaceChildren(toggle, menu);
   }
 
