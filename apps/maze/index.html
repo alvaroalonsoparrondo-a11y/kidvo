@@ -120,7 +120,11 @@
   @media (pointer: coarse) and (max-height: 480px) {
     .pad { grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 40px); }
   }
-  @media (prefers-reduced-motion: reduce) { #oracle { transition: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    #oracle { transition: none; }
+    canvas.bump { animation: bump-still .3s; }
+  }
+  @keyframes bump-still { 0%, 100% { outline: 3px solid var(--me); outline-offset: 3px; } }
 </style>
 </head>
 <body>
