@@ -46,14 +46,31 @@ button { font: inherit; color: inherit; }
 .tb-brand { display: flex; align-items: center; gap: 6px; font-weight: 800; flex: none; }
 .tb-brand img { image-rendering: pixelated; }
 #motto { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
-#lang { display: flex; gap: 4px; flex: none; }
+/* Language: one button with the current language, opening a menu of all of them. */
+#lang { position: relative; flex: none; }
 .lang-btn {
+  display: flex; align-items: center; justify-content: center; gap: 4px;
   min-width: 34px; height: 24px; padding: 0 6px;
   background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
   font: 800 11px/1 var(--font-ui); cursor: pointer;
 }
-.lang-btn[aria-pressed="true"] { background: var(--ink); color: var(--sun); }
+.lang-btn[aria-expanded="true"] { background: var(--ink); color: var(--sun); }
 .lang-btn:hover { background: var(--sun); color: var(--ink); }
+.lang-caret { font-size: 9px; }
+#lang-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; min-width: 150px;
+  display: flex; flex-direction: column; padding: 4px;
+  background: var(--paper); border: 2px solid var(--ink); box-shadow: var(--shadow);
+}
+#lang-menu[hidden] { display: none; }
+.lang-item {
+  display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 4px 8px;
+  background: none; border: 0; text-align: left; cursor: pointer;
+  font: 600 13px/1.2 var(--font-ui);
+}
+.lang-item b { min-width: 2.2em; }
+.lang-item[aria-current="true"] { background: var(--ink); color: var(--sun); }
+.lang-item:hover, .lang-item:focus-visible { background: var(--sun); color: var(--ink); outline: none; }
 /* Read aloud: on and off like a language button; hidden where the device has no voice of its own. */
 #speak {
   flex: none; display: grid; place-items: center; width: 34px; height: 24px; padding: 0;
@@ -624,6 +641,7 @@ body[data-view="play"] .win-btns [data-act="max"] { display: none; }
   .win-btns { gap: 6px; }
   .win-btns button { width: 36px; height: 36px; font-size: 16px; }
   .lang-btn { height: 32px; min-width: 42px; }
+  .lang-item { min-height: 44px; }
   #speak { height: 32px; width: 42px; }
   .view-btn { height: 28px; min-width: 38px; justify-content: center; }
   body[data-view="play"] .win-back { width: 44px; height: 36px; font-size: 24px; }

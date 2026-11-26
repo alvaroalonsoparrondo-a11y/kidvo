@@ -1199,17 +1199,49 @@
   function applyStatic() {
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-i18n]').forEach(n => { n.textContent = T(n.dataset.i18n); });
-    const box = $('#lang');
-    box.replaceChildren(...LANGS.map(l => el('button', {
-      type: 'button', class: 'lang-btn', lang: l, title: I18N.languages[l],
-      'aria-pressed': l === lang ? 'true' : 'false',
-      onclick: () => setLang(l)
-    }, l.toUpperCase())));
-    box.setAttribute('aria-label', T('language'));
+    renderLangMenu();
     renderViews();
     // Another language needs another voice: stop the old one, and show the switch only if this one has a voice.
     if (synth) synth.cancel();
     renderSpeak();
+  }
+
+  // One button with the current language opens a menu of all of them, so the top bar
+  // stays the same width however many languages the desktop gets.
+  function renderLangMenu() {
+    const box = $('#lang');
+    const toggle = el('button', {
+      type: 'button', id: 'lang-btn', class: 'lang-btn', title: T('language'),
+      'aria-label': `${T('language')}: ${I18N.languages[lang]}`,
+      'aria-haspopup': 'true', 'aria-expanded': 'false', 'aria-controls': 'lang-menu'
+    }, lang.toUpperCase(), el('span', { class: 'lang-caret', 'aria-hidden': 'true' }, '▾'));
+    const items = LANGS.map(l => el('button', {
+      type: 'button', class: 'lang-item', lang: l, 'aria-current': l === lang ? 'true' : null,
+      onclick: () => { close(); setLang(l); $('#lang-btn').focus(); }
+    }, el('b', {}, l.toUpperCase()), ' ', I18N.languages[l]));
+    const menu = el('div', { id: 'lang-menu', role: 'group', 'aria-label': T('language'), hidden: '' }, ...items);
+    const open = () => {
+      menu.hidden = false; toggle.setAttribute('aria-expanded', 'true');
+      (menu.querySelector('[aria-current]') || items[0]).focus();
+      setTimeout(() => document.addEventListener('pointerdown', outside), 0);
+    };
+    function close() {
+      menu.hidden = true; toggle.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('pointerdown', outside);
+    }
+    const outside = e => { if (!box.contains(e.target)) close(); };
+    toggle.onclick = () => (menu.hidden ? open() : close());
+    box.onkeydown = e => {
+      if (menu.hidden) return;
+      if (e.key === 'Escape') { e.stopPropagation(); close(); toggle.focus(); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const i = items.indexOf(document.activeElement);
+        items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+      }
+    };
+    box.onfocusout = e => { if (!menu.hidden && !box.contains(e.relatedTarget)) close(); };
+    box.replaceChildren(toggle, menu);
   }
 
   function setLang(l, initial = false) {
